@@ -6,42 +6,47 @@ import java.util.*;
 public class ShortPath {
     public int shortestPath(Edge[] edges, int nodeCount, int maxEdges, int sourceNode, int targetNode) {
 
-        int[] nodeDist = new int[nodeCount];
-        int[] minDistEdges = new int[nodeCount];
-        boolean[] hasVisited = new boolean[edges.length];
+        // Array containing the d value for a node at a specific index
+        int[] nodesD = new int[nodeCount];
 
         //Initialize single source
-        for(int i = 0; i < nodeDist.length; i++) {
-            nodeDist[i] = 10000;
-            minDistEdges[i] = 0;
+        for (int i = 0; i < nodesD.length; i++) {
+            nodesD[i] = Integer.MAX_VALUE;
         }
-        nodeDist[sourceNode] = 0;
 
-        //for int i = 1 to |G.V| - 1
-        for(int i = 0; i <= nodeCount; i++)
-            //For each edge
+        nodesD[sourceNode] = 0;
+
+        // The amount of relax-rounds is equal to the number of nodes that we are allowed to visit.
+        // By doing this, we make sure that an island that we want go to has the correct d value
+        // that is, not necessarily the lowest possible value.
+        for(int i = 0; i < maxEdges; i++) {
+
+            ArrayList<Integer> toBeRelaxed = new ArrayList<>(); // ArrayList containing the indexes of the nodes that needs to be relaxed
+            ArrayList<Integer> relaxingValues = new ArrayList<>(); //ArrayList containing the calculated d-values after a relax-round
+            //together, these two ArrayLists make up a pair of numbers expressing what node should be relaxed and with what value
+
+            // calculates the edges that should be relaxed
             for(int j = 0; j < edges.length; j++) {
-                //Relax
 
-                //Extra checks to see if a way has not been explored, and sets its values correctly if that is the case.
-                if(minDistEdges[edges[j].from] + 1 <= maxEdges || (edges[j].from == sourceNode && !hasVisited[j])) {
-                    if(edges[j].from == sourceNode && !hasVisited[j]) {
-                        minDistEdges[edges[j].to] = 1;
-                        nodeDist[edges[j].to] = edges[j].weight;
-                        hasVisited[j] = true;
-                    }
-                    else if(nodeDist[edges[j].to] > nodeDist[edges[j].from] + edges[j].weight) {
-                        nodeDist[edges[j].to] = nodeDist[edges[j].from] + edges[j].weight;
+                int u = edges[j].from;
+                int v = edges[j].to;
+                int w = edges[j].weight;
 
-                        //If it has been explored then
-                        minDistEdges[edges[j].to] = minDistEdges[edges[j].from] + 1;
-
-                        hasVisited[j] = true;
-                    }
+                if( !(nodesD[u]==Integer.MAX_VALUE) && nodesD[v] > nodesD[u] + w){ // Gets around a problem with adding a positive integer to Integer.MAX_VALUE
+                    toBeRelaxed.add(v); // adds the node that should have its d-value updated.
+                    relaxingValues.add(nodesD[u]+w); // adds the corresponding d-value
                 }
             }
-
-        return nodeDist[targetNode];
+            int counter = 0; // used to match up the node and d-value pair
+            for(int v : toBeRelaxed){
+                // makes sure that we won't override a former d-value update that gave the node a lower d-value than what we are currently trying to give it
+                if(nodesD[v] > relaxingValues.get(counter)){
+                    nodesD[v] = relaxingValues.get(counter); //updates the d-value for that node
+                }
+                counter++;
+            }
+        }
+        return nodesD[targetNode];
     }
 
     public static void testAll() {
